@@ -1,47 +1,44 @@
-require_relative "numerologia_pitagorica/mappings"
-require_relative "numerologia_pitagorica/calculator"
-require_relative "numerologia_pitagorica/interpreter"
+# frozen_string_literal: true
+
+require_relative 'numerologia_pitagorica/mappings'
+require_relative 'numerologia_pitagorica/calculator'
+require_relative 'numerologia_pitagorica/interpreter'
 
 module NumerologiaPitagorica
-  class << self
-    def calculate_life_path_number(day, month, year)
-        Calculator.calculate_life_path_number(day, month, year)
-    end
+  class Error < StandardError; end
 
-    def calculate_expression_number(full_name)
-        Calculator.calculate_expression_number(full_name)
-    end
+  # Calcula todos los números de una persona
+  def self.analizar_completo(nombre_completo, fecha_nacimiento)
+    {
+      vida: numero_vida(fecha_nacimiento),
+      expresion: numero_expresion(nombre_completo),
+      alma: numero_alma(nombre_completo),
+      personalidad: numero_personalidad(nombre_completo)
+    }
+  end
 
-    def calculate_soul_urge_number(name)
-        Calculator.calculate_soul_urge_number(name)
-    end
+  # Número de vida (camino de vida)
+  def self.numero_vida(fecha_nacimiento)
+    Calculator.numero_vida(fecha_nacimiento)
+  end
 
-    def calculate_personality_number(name)
-        Calculator.calculate_personality_number(name)
-    end
+  # Número de expresión (número del destino)
+  def self.numero_expresion(nombre_completo)
+    Calculator.numero_expresion(nombre_completo)
+  end
 
-    def get_meaning(number)
-      Interpreter.get_meaning(number)
-    end
+  # Número del alma (número del corazón)
+  def self.numero_alma(nombre_completo)
+    Calculator.numero_alma(nombre_completo)
+  end
+
+  # Número de personalidad (número exterior)
+  def self.numero_personalidad(nombre_completo)
+    Calculator.numero_personalidad(nombre_completo)
+  end
+
+  # Obtener interpretación de un número
+  def self.interpretar(numero)
+    Interpreter.interpretar(numero)
   end
 end
-```
-
-4. Click **"Commit changes"**
-
----
-
-## ✅ ESTRUCTURA FINAL
-
-Después de esto, tu repo debe verse así:
-```
-numerologia_pitagorica/
-├── api.rb
-├── Gemfile
-├── config.ru
-└── lib/
-    ├── numerologia_pitagorica.rb
-    └── numerologia_pitagorica/
-        ├── mappings.rb
-        ├── calculator.rb
-        └── interpreter.rb
