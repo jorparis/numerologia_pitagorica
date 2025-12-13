@@ -2,102 +2,90 @@ require 'sinatra'
 require 'json'
 require_relative 'lib/numerologia_pitagorica'
 
-# Configuración CORS para que FlutterFlow pueda conectarse
-before do
-  headers['Access-Control-Allow-Origin'] = '*'
-  headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-  headers['Access-Control-Allow-Headers'] = 'Content-Type'
+# Configuración para Railway
+set :bind, '0.0.0.0'
+set :port, ENV['PORT'] || 3000
+
+# Habilitar CORS para permitir peticiones desde FlutterFlow
+require 'rack/cors'
+use Rack::Cors do
+  allow do
+    origins '*'
+    resource '*', 
+      headers: :any, 
+      methods: [:get, :post, :options]
+  end
 end
 
-options '*' do
-  200
-end
-
-# Endpoint de salud (verificar que la API está viva)
+# Health check
 get '/health' do
   content_type :json
-  { status: 'ok', message: 'Numerología API Running' }.to_json
+  { status: 'ok', timestamp: Time.now.iso8601 }.to_json
 end
 
-# Endpoint principal: Cálculo completo de numerología
+# Análisis completo de numerología
 post '/calculate' do
   content_type :json
   
   begin
-    # Parsear datos del request
     data = JSON.parse(request.body.read)
     
     nombre = data['nombre']
-    dia = data['dia']
-    mes = data['mes']
-    anio = data['anio']
+    fecha = data['fecha_nacimiento']
     
-    # Validaciones
-    return { error: 'Nombre requerido' }.to_json, 400 if nombre.nil? || nombre.empty?
-    return { error: 'Fecha completa requerida' }.to_json, 400 if dia.nil? || mes.nil? || anio.nil?
+    unless nombre && fecha
+      halt 400, { error: 'Se requieren nombre y fecha_nacimiento' }.to_json
+    end
     
-    # Cálculos usando tu gema
-    numero_vida = NumerologiaPitagorica.calculate_life_path_number(dia, mes, anio)
-    numero_expresion = NumerologiaPitagorica.calculate_expression_number(nombre)
-    numero_alma = NumerologiaPitagorica.calculate_soul_urge_number(nombre)
-    numero_personalidad = NumerologiaPitagorica.calculate_personality_number(nombre)
+    numeros = NumerologiaPitagorica.analizar_completo(nombre, fecha)
     
-    # Interpretaciones
-    interpretacion_vida = NumerologiaPitagorica.get_meaning(numero_vida)
-    interpretacion_expresion = NumerologiaPitagorica.get_meaning(numero_expresion)
-    interpretacion_alma = NumerologiaPitagorica.get_meaning(numero_alma)
-    interpretacion_personalidad = NumerologiaPitagorica.get_meaning(numero_personalidad)
+    interpretaciones = {
+      vida: NumerologiaPitagorica.interpretar(numeros[:vida]),
+      expresion: NumerologiaPitagorica.interpretar(numeros[:expresion]),
+      alma: NumerologiaPitagorica.interpretar(numeros[:alma]),
+      personalidad: NumerologiaPitagorica.interpretar(numeros[:personalidad])
+    }
     
-    # Respuesta JSON completa
     {
-      success: true,
-      datos_entrada: {
-        nombre: nombre,
-        fecha_nacimiento: "#{dia}/#{mes}/#{anio}"
-      },
-      numeros: {
-        vida: numero_vida,
-        expresion: numero_expresion,
-        alma: numero_alma,
-        personalidad: numero_personalidad
-      },
-      interpretaciones: {
-        vida: interpretacion_vida,
-        expresion: interpretacion_expresion,
-        alma: interpretacion_alma,
-        personalidad: interpretacion_personalidad
-      },
-      es_maestro: [11, 22, 33].any? { |n| [numero_vida, numero_expresion, numero_alma, numero_personalidad].include?(n) }
+      numeros: numeros,
+      interpretaciones: interpretaciones
     }.to_json
     
   rescue JSON::ParserError
-    status 400
-    { error: 'JSON inválido' }.to_json
+    halt 400, { error: 'JSON inválido' }.to_json
   rescue => e
-    status 500
-    { error: 'Error interno', detalles: e.message }.to_json
+    halt 500, { error: e.message }.to_json
   end
 end
 
-# Endpoint adicional: Solo calcular número de vida
+# Solo número de vida
 post '/life-path' do
   content_type :json
   
   begin
     data = JSON.parse(request.body.read)
-    numero = NumerologiaPitagorica.calculate_life_path_number(data['dia'], data['mes'], data['anio'])
+    fecha = data['fecha_nacimiento']
+    
+    unless fecha
+      halt 400, { error: 'Se requiere fecha_nacimiento' }.to_json
+    end
+    
+    numero = NumerologiaPitagorica.numero_vida(fecha)
+    interpretacion = NumerologiaPitagorica.interpretar(numero)
     
     {
       numero: numero,
-      interpretacion: NumerologiaPitagorica.get_meaning(numero)
+      interpretacion: interpretacion
     }.to_json
+    
+  rescue JSON::ParserError
+    halt 400, { error: 'JSON inválido' }.to_json
   rescue => e
-    status 400
-    { error: e.message }.to_json
+    halt 500, { error: e.message }.to_json
   end
 end
 
-# Endpoint adicional: Solo calcular por nombre
+# Números del nombre (expresión, alma, personalidad)
 post '/name-numbers' do
   content_type :json
   
@@ -105,13 +93,30 @@ post '/name-numbers' do
     data = JSON.parse(request.body.read)
     nombre = data['nombre']
     
+    unless nombre
+      halt 400, { error: 'Se requiere nombre' }.to_json
+    end
+    
+    numeros = {
+      expresion: NumerologiaPitagorica.numero_expresion(nombre),
+      alma: NumerologiaPitagorica.numero_alma(nombre),
+      personalidad: NumerologiaPitagorica.numero_personalidad(nombre)
+    }
+    
+    interpretaciones = {
+      expresion: NumerologiaPitagorica.interpretar(numeros[:expresion]),
+      alma: NumerologiaPitagorica.interpretar(numeros[:alma]),
+      personalidad: NumerologiaPitagorica.interpretar(numeros[:personalidad])
+    }
+    
     {
-      expresion: NumerologiaPitagorica.calculate_expression_number(nombre),
-      alma: NumerologiaPitagorica.calculate_soul_urge_number(nombre),
-      personalidad: NumerologiaPitagorica.calculate_personality_number(nombre)
+      numeros: numeros,
+      interpretaciones: interpretaciones
     }.to_json
+    
+  rescue JSON::ParserError
+    halt 400, { error: 'JSON inválido' }.to_json
   rescue => e
-    status 400
-    { error: e.message }.to_json
+    halt 500, { error: e.message }.to_json
   end
 end
