@@ -1,22 +1,18 @@
-# Puma configuration for Railway
+# Puma configuration for Railway deployment
+
+# Bind to all interfaces (0.0.0.0) not just localhost
 port ENV.fetch("PORT") { 3000 }
-environment ENV.fetch("RACK_ENV") { "development" }
+bind "tcp://0.0.0.0:#{ENV.fetch('PORT') { 3000 }}"
 
-# Bind to all interfaces (not just localhost)
-bind "tcp://0.0.0.0:#{ENV.fetch("PORT") { 3000 }}"
+# Environment
+environment ENV.fetch("RACK_ENV") { "production" }
 
-# Specifies the number of `workers` to boot in clustered mode.
-workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+# Workers
+workers ENV.fetch("WEB_CONCURRENCY") { 1 }
 
-# Use the `preload_app!` method when specifying a `workers` number.
-# This directive tells Puma to first boot the application and load code
-# before forking the application. This takes advantage of Copy On Write
-# process behavior so workers use less memory.
+# Threads
+threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+threads threads_count, threads_count
+
+# Preload app for better performance
 preload_app!
-
-# Allow puma to be restarted by `rails restart` command.
-plugin :tmp_restart
-
-on_worker_boot do
-  # Worker specific setup for Rails 4.1+
-end
