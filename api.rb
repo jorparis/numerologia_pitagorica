@@ -1,9 +1,39 @@
-require 'sinatra/base'
-require 'json'
-require 'rack/cors'
-require_relative 'lib/numerologia_pitagorica'
+puts "=== STARTING API.RB LOAD ==="
+
+begin
+  puts "Loading sinatra/base..."
+  require 'sinatra/base'
+  puts "✓ sinatra/base loaded"
+  
+  puts "Loading json..."
+  require 'json'
+  puts "✓ json loaded"
+  
+  puts "Loading rack/cors..."
+  require 'rack/cors'
+  puts "✓ rack/cors loaded"
+  
+  puts "Loading lib/numerologia_pitagorica..."
+  require_relative 'lib/numerologia_pitagorica'
+  puts "✓ lib/numerologia_pitagorica loaded"
+  
+rescue LoadError => e
+  puts "!!! LOAD ERROR: #{e.message}"
+  puts "!!! BACKTRACE:"
+  puts e.backtrace.join("\n")
+  raise
+rescue => e
+  puts "!!! ERROR: #{e.class} - #{e.message}"
+  puts "!!! BACKTRACE:"
+  puts e.backtrace.join("\n")
+  raise
+end
+
+puts "Defining NumerologiaAPI class..."
 
 class NumerologiaAPI < Sinatra::Base
+  
+  puts "Setting up CORS..."
   
   # CORS configuration
   use Rack::Cors do
@@ -14,6 +44,8 @@ class NumerologiaAPI < Sinatra::Base
         methods: [:get, :post, :options]
     end
   end
+  
+  puts "Defining routes..."
   
   # Health check endpoint
   get '/health' do
@@ -119,6 +151,10 @@ class NumerologiaAPI < Sinatra::Base
     end
   end
   
+  puts "✓ Routes defined"
+  
   # Start the server if this file is executed directly
   run! if app_file == $0
 end
+
+puts "=== API.RB LOADED SUCCESSFULLY ==="
