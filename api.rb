@@ -1,13 +1,9 @@
 require 'sinatra'
 require 'json'
+require 'rack/cors'
 require_relative 'lib/numerologia_pitagorica'
 
-# Configuración para Railway
-set :bind, '0.0.0.0'
-set :port, ENV['PORT'] || 3000
-
-# Habilitar CORS para permitir peticiones desde FlutterFlow
-require 'rack/cors'
+# CORS configuration
 use Rack::Cors do
   allow do
     origins '*'
@@ -17,13 +13,13 @@ use Rack::Cors do
   end
 end
 
-# Health check
+# Health check endpoint
 get '/health' do
   content_type :json
   { status: 'ok', timestamp: Time.now.iso8601 }.to_json
 end
 
-# Análisis completo de numerología
+# Complete numerology analysis
 post '/calculate' do
   content_type :json
   
@@ -58,7 +54,7 @@ post '/calculate' do
   end
 end
 
-# Solo número de vida
+# Life path number only
 post '/life-path' do
   content_type :json
   
@@ -85,7 +81,7 @@ post '/life-path' do
   end
 end
 
-# Números del nombre (expresión, alma, personalidad)
+# Name numbers (expression, soul, personality)
 post '/name-numbers' do
   content_type :json
   
