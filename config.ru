@@ -1,2 +1,3 @@
 require './api'
-run Sinatra::Application
+
+run NumerologiaAPI
