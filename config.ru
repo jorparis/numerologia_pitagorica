@@ -1,3 +1,3 @@
-require './api-simple'
-
-run NumerologiaAPI
+require './api'
+   
+   run NumerologiaAPI
