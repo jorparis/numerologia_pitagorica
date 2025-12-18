@@ -2,17 +2,15 @@ require 'sinatra/base'
 require 'json'
 require 'rack/cors'
 
-# --- CORRECCIÓN DE MAPA ---
-# 1. Buscamos la calculadora en su carpeta específica (donde vimos que está)
-require_relative 'lib/numerologia_pitagorica/calculator'
-
-# 2. Buscamos el contenido en la carpeta lib general (donde vimos que está en tu captura)
+# --- CORRECCIÓN FINAL ---
+# Tus archivos están directamente en la carpeta lib, así que los llamamos así:
+require_relative 'lib/calculator'
 require_relative 'lib/content'
-# ---------------------------
+# ------------------------
 
 class NumerologiaAPI < Sinatra::Base
 
-  # Configuración de Seguridad
+  # Configuración de Seguridad (CORS)
   use Rack::Cors do
     allow do
       origins '*'
@@ -33,15 +31,13 @@ class NumerologiaAPI < Sinatra::Base
       name = payload['name'] || ""
       birthdate = payload['birthDate'] || Time.now.strftime("%Y-%m-%d")
 
-      # Cálculo usando el motor lógico
-      # Nota: Asumimos que calculator.rb usa el módulo Numerologia. 
-      # Si falla, es posible que debamos cambiar esto a NumerologiaPitagorica::Calculator
+      # Cálculo usando tus archivos de lib/calculator.rb
       life_path_data = Numerologia::Calculator.calculate_life_path(birthdate)
       expression_data = Numerologia::Calculator.calculate_name(name, :all)
       soul_data = Numerologia::Calculator.calculate_name(name, :vowels)
       personality_data = Numerologia::Calculator.calculate_name(name, :consonants)
 
-      # Preparar respuesta
+      # Preparar respuesta usando tus archivos de lib/content.rb
       response_data = {
         profile: { name: name, birth_date: birthdate },
         chart: {
