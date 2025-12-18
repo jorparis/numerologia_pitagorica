@@ -2,14 +2,13 @@ require 'sinatra/base'
 require 'json'
 require 'rack/cors'
 
-# FIX 1: Aquí apuntamos a la sub-carpeta donde realmente están tus archivos
+# CORRECCIÓN DE RUTAS: Ahora apuntamos a donde realmente están tus archivos
 require_relative 'lib/numerologia_pitagorica/calculator'
 require_relative 'lib/numerologia_pitagorica/content'
 
-# FIX 2: Definimos la clase "NumerologiaAPI" que tu config.ru está buscando
+# CORRECCIÓN DE IDENTIDAD: Definimos la clase que busca tu config.ru
 class NumerologiaAPI < Sinatra::Base
 
-  # Configuración de Seguridad
   use Rack::Cors do
     allow do
       origins '*'
@@ -17,11 +16,10 @@ class NumerologiaAPI < Sinatra::Base
     end
   end
 
-  # Configuración para Render
+  # Esto ayuda a Render a encontrar el puerto correcto
   set :bind, '0.0.0.0'
   set :port, ENV['PORT'] || 8080
 
-  # Endpoint Principal
   post '/api/v1/calculate' do
     content_type :json
     
@@ -30,13 +28,13 @@ class NumerologiaAPI < Sinatra::Base
       name = payload['name'] || ""
       birthdate = payload['birthDate'] || Time.now.strftime("%Y-%m-%d")
 
-      # Usamos tu calculadora lógica
+      # Cálculo
       life_path_data = Numerologia::Calculator.calculate_life_path(birthdate)
       expression_data = Numerologia::Calculator.calculate_name(name, :all)
       soul_data = Numerologia::Calculator.calculate_name(name, :vowels)
       personality_data = Numerologia::Calculator.calculate_name(name, :consonants)
 
-      # Preparamos el paquete de respuesta
+      # Respuesta
       response_data = {
         profile: { name: name, birth_date: birthdate },
         chart: {
@@ -68,4 +66,7 @@ class NumerologiaAPI < Sinatra::Base
       { error: "Error en el cálculo: #{e.message}" }.to_json
     end
   end
+
+  # Arrancar si se ejecuta directamente
+  run! if app_file == $0
 end
