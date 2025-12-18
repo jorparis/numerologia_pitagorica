@@ -2,13 +2,17 @@ require 'sinatra/base'
 require 'json'
 require 'rack/cors'
 
-# CORRECCIÓN DE RUTAS: Ahora apuntamos a donde realmente están tus archivos
+# --- CORRECCIÓN DE MAPA ---
+# 1. Buscamos la calculadora en su carpeta específica (donde vimos que está)
 require_relative 'lib/numerologia_pitagorica/calculator'
-require_relative 'lib/numerologia_pitagorica/content'
 
-# CORRECCIÓN DE IDENTIDAD: Definimos la clase que busca tu config.ru
+# 2. Buscamos el contenido en la carpeta lib general (donde vimos que está en tu captura)
+require_relative 'lib/content'
+# ---------------------------
+
 class NumerologiaAPI < Sinatra::Base
 
+  # Configuración de Seguridad
   use Rack::Cors do
     allow do
       origins '*'
@@ -16,10 +20,11 @@ class NumerologiaAPI < Sinatra::Base
     end
   end
 
-  # Esto ayuda a Render a encontrar el puerto correcto
+  # Configuración de Puerto para Render
   set :bind, '0.0.0.0'
   set :port, ENV['PORT'] || 8080
 
+  # Endpoint Principal
   post '/api/v1/calculate' do
     content_type :json
     
@@ -28,13 +33,15 @@ class NumerologiaAPI < Sinatra::Base
       name = payload['name'] || ""
       birthdate = payload['birthDate'] || Time.now.strftime("%Y-%m-%d")
 
-      # Cálculo
+      # Cálculo usando el motor lógico
+      # Nota: Asumimos que calculator.rb usa el módulo Numerologia. 
+      # Si falla, es posible que debamos cambiar esto a NumerologiaPitagorica::Calculator
       life_path_data = Numerologia::Calculator.calculate_life_path(birthdate)
       expression_data = Numerologia::Calculator.calculate_name(name, :all)
       soul_data = Numerologia::Calculator.calculate_name(name, :vowels)
       personality_data = Numerologia::Calculator.calculate_name(name, :consonants)
 
-      # Respuesta
+      # Preparar respuesta
       response_data = {
         profile: { name: name, birth_date: birthdate },
         chart: {
@@ -67,6 +74,6 @@ class NumerologiaAPI < Sinatra::Base
     end
   end
 
-  # Arrancar si se ejecuta directamente
+  # Arrancar servidor si se ejecuta este archivo
   run! if app_file == $0
 end
